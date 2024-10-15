@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-djangorestframework = "*"
-django-rest-knox = "*"
+djangorestframework = "3.15.2"
+django-rest-knox = "5.0.2"
 
 [dev-packages]
 
