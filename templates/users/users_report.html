@@ -1,0 +1,37 @@
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Client Report</title>
+    <meta name="description" content="Report example" />
+    <style>
+      {% include 'users/main.css' %}
+    </style>
+  </head>
+  <body>
+    <div class="title">
+      <h1>REPORTE DE USUARIOS</h1>
+    </div>
+    <table>
+      <thead>
+        <th>NOMBRE</th>
+        <th>APELLIDO PATERNO</th>
+        <th>APELLIDO MATERNO</th>
+        <th>EDAD</th>
+        <th>EMAIL</th>
+        <th>TELEFONO</th>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{user.name}}</td>
+          <td>{{user.father_surname}}</td>
+          <td>{{user.mother_surname}}</td>
+          <td>{{user.age}}</td>
+          <td>{{user.email}}</td>
+          <td>{{user.phone_number}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

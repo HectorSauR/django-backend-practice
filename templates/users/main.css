@@ -1,0 +1,63 @@
+@page{
+  @bottom-center {
+    color: #000;
+    content: counter(page);
+    text-align: center;
+    width: 1cm;
+    height: 100%
+    font-size: 12pt;
+  }
+}
+
+@page chapter {
+  background: #fbc847;
+  margin: 0;
+  @top-left {
+    content: none;
+  }
+  @top-center {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+}
+
+body .title {
+  text-align: center;
+  font-size: 16pt;
+  font-weight: bold;
+  margin-bottom: 20px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+body table {
+  text-align: center;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+th,
+td {
+  border: 1px solid black;
+}
+
+body table thead th {
+  background: #2f75b5;
+  color: #fff;
+  padding: 10px;
+  font-weight: bold;
+  font-size: 8pt;
+}
+
+body table tbody tr td {
+  padding: 10px;
+  font-size: 8pt;
+  text-align: left;
+}
+
+body table tbody tr td.comment {
+  width: 40%;
+  
+}
