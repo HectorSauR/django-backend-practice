@@ -19,6 +19,8 @@ from knox import views as knox_views
 from knox.auth import TokenAuthentication
 
 from django.contrib.auth import login
+from django.db.models.query import QuerySet
+from utils.order_utils import QuickSort
 
 
 class ListUserAPI(ListAPIView):
@@ -28,13 +30,38 @@ class ListUserAPI(ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset: QuerySet = User.objects.get_queryset()
+
         user = self.request.user
 
-        if user.is_superuser:
-            return queryset
+        if not user.is_superuser or not user.is_staff:
+            return queryset.filter(id=user.id)
 
-        return queryset.filter(id=user.id)
+        query_params: dict = self.request.query_params
+        try:
+            age: int = query_params.get('age', None)
+            if age is not None:
+                queryset = queryset.filter(age=age)
+
+            field: str = query_params.get('order', None)
+            if field is not None:
+
+                order = "asc"
+                if field.lower().startswith('-'):
+                    order = "desc"
+                    field = field[1:].lower()
+
+                quicksort = QuickSort(
+                    list(queryset),
+                    field,
+                    order
+                )
+                queryset: list = quicksort.sort()
+
+        except ValueError:
+            pass
+
+        return queryset
 
 
 class CreateUserAPI(CreateAPIView):
