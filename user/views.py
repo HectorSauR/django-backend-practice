@@ -1,9 +1,9 @@
 # from django.shortcuts import render
 
 from rest_framework.generics import (
-    CreateAPIView, UpdateAPIView, ListAPIView, DestroyAPIView)
+    CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView, DestroyAPIView)
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
@@ -16,17 +16,18 @@ from user.serializers import (
 )
 
 from knox import views as knox_views
-from knox.auth import TokenAuthentication
 
 from django.contrib.auth import login
 from django.db.models.query import QuerySet
+
 from utils.order_utils import QuickSort
+from utils.generate_users_pdf import generate_users_pdf
+from django.http import HttpResponse
 
 
 class ListUserAPI(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
@@ -62,6 +63,56 @@ class ListUserAPI(ListAPIView):
             pass
 
         return queryset
+
+
+class RetrieveUsersPDFAPI(RetrieveAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated, IsAdminUser)
+
+    def get_queryset(self):
+        queryset: QuerySet = User.objects.get_queryset()
+
+        user = self.request.user
+
+        if not user.is_superuser or not user.is_staff:
+            return queryset.filter(id=user.id)
+
+        query_params: dict = self.request.query_params
+        try:
+            age: int = query_params.get('age', None)
+            if age is not None:
+                queryset = queryset.filter(age=age)
+
+            field: str = query_params.get('order', None)
+            if field is not None:
+
+                order = "asc"
+                if field.lower().startswith('-'):
+                    order = "desc"
+                    field = field[1:].lower()
+
+                quicksort = QuickSort(
+                    list(queryset),
+                    field,
+                    order
+                )
+                queryset: list = quicksort.sort()
+
+        except ValueError:
+            pass
+
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        data = self.get_queryset()
+        pdf = generate_users_pdf({
+            'users': data
+        })
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="users_report.pdf"'
+
+        return response
 
 
 class CreateUserAPI(CreateAPIView):
