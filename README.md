@@ -73,3 +73,9 @@ deactivate
 
 **POST** CREATE USER
 > http://{host}:{port}/user/
+
+**PUT** UPDATE USER
+> http://{host}:{port}/user/
+
+**DELETE** REMOVE USER
+> http://{host}:{port}/user/
