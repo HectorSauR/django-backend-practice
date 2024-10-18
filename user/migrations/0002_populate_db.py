@@ -19,7 +19,7 @@ def create_base_users(a, b):
     })
 
     # create staff user
-    User.objects.create(**{
+    User.objects.create_user(**{
         'email': "staff@example.com",
         'password': "123",
         'name': "staff",
@@ -37,7 +37,7 @@ def create_base_users(a, b):
     with open(file_path) as f:
         users_data = json.load(f)
         for user_data in users_data:
-            User.objects.create(**user_data)
+            User.objects.create_user(**user_data)
 
 
 def delete_base_users():
