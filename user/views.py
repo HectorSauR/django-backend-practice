@@ -25,6 +25,37 @@ from utils.generate_users_pdf import generate_users_pdf
 from django.http import HttpResponse
 
 
+def get_users_queryset(
+        queryset: QuerySet, user: User, query_params: dict) -> list:
+    if not user.is_superuser and not user.is_staff:
+        return list(queryset.filter(id=user.id))
+
+    try:
+        age: int = query_params.get('age', None)
+        if age is not None:
+            queryset = queryset.filter(age=age)
+
+        field: str = query_params.get('order', None)
+        if field is not None:
+
+            order = "asc"
+            if field.lower().startswith('-'):
+                order = "desc"
+                field = field[1:].lower()
+
+            quicksort = QuickSort(
+                list(queryset),
+                field,
+                order
+            )
+            queryset: list = quicksort.sort()
+
+    except ValueError:
+        pass
+
+    return list(queryset)
+
+
 class ListUserAPI(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -34,35 +65,9 @@ class ListUserAPI(ListAPIView):
         queryset: QuerySet = User.objects.get_queryset()
 
         user = self.request.user
-
-        if not user.is_superuser or not user.is_staff:
-            return queryset.filter(id=user.id)
-
         query_params: dict = self.request.query_params
-        try:
-            age: int = query_params.get('age', None)
-            if age is not None:
-                queryset = queryset.filter(age=age)
 
-            field: str = query_params.get('order', None)
-            if field is not None:
-
-                order = "asc"
-                if field.lower().startswith('-'):
-                    order = "desc"
-                    field = field[1:].lower()
-
-                quicksort = QuickSort(
-                    list(queryset),
-                    field,
-                    order
-                )
-                queryset: list = quicksort.sort()
-
-        except ValueError:
-            pass
-
-        return queryset
+        return get_users_queryset(queryset, user, query_params)
 
 
 class RetrieveUsersPDFAPI(RetrieveAPIView):
@@ -73,35 +78,9 @@ class RetrieveUsersPDFAPI(RetrieveAPIView):
         queryset: QuerySet = User.objects.get_queryset()
 
         user = self.request.user
-
-        if not user.is_superuser or not user.is_staff:
-            return queryset.filter(id=user.id)
-
         query_params: dict = self.request.query_params
-        try:
-            age: int = query_params.get('age', None)
-            if age is not None:
-                queryset = queryset.filter(age=age)
 
-            field: str = query_params.get('order', None)
-            if field is not None:
-
-                order = "asc"
-                if field.lower().startswith('-'):
-                    order = "desc"
-                    field = field[1:].lower()
-
-                quicksort = QuickSort(
-                    list(queryset),
-                    field,
-                    order
-                )
-                queryset: list = quicksort.sort()
-
-        except ValueError:
-            pass
-
-        return queryset
+        return get_users_queryset(queryset, user, query_params)
 
     def retrieve(self, request, *args, **kwargs):
         data = self.get_queryset()
@@ -145,16 +124,7 @@ class UpdateUserAPI(UpdateAPIView):
 
 class DeleteUserAPI(DestroyAPIView):
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        if user.is_superuser:
-            return queryset
-
-        return queryset.filter(id=user.id)
+    permission_classes = (IsAuthenticated, IsAdminUser)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -164,7 +134,8 @@ class DeleteUserAPI(DestroyAPIView):
             raise PermissionDenied(
                 "High privileged users cannot be removed.")
 
-        if user.id != instance.id and not user.is_superuser:
+        if user.id != instance.id and (
+                not user.is_superuser or not user.is_staff):
             raise PermissionDenied(
                 "You don't have perms to delete this user.")
 
